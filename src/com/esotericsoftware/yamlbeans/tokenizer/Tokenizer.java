@@ -1083,8 +1083,17 @@ public class Tokenizer {
 	}
 
 	public static void main (String[] args) throws Exception {
-	        if (args.length > 0 && args[0].equals("chomp") {
-	        
+	        if (args.length > 0 && args[0].equals("chomp")) {
+	        	com.esotericsoftware.yamlbeans.YamlReader reader = 
+			    new com.esotericsoftware.yamlbeans.YamlReader(new FileReader("test/test-chomp.yml"));
+	        	Map map = (Map) reader.read();
+	        	reader.close();
+	        	for (int i = 1; i <= 6; i++) {
+			    String key = "key" + i;
+			    String val = (String) map.get(key);
+			    System.out.print(key + ": ");
+			    System.out.println(val.replace("\n", "\\n").replace("\r", "\\r").replace(' ', '.'));
+	        	} 
 	        } else {
 		for (Iterator iter = new Tokenizer(new FileReader("test/test.yml")).iterator(); iter.hasNext();)
 			System.out.println(iter.next());

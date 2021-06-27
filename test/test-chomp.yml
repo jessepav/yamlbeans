@@ -1,0 +1,44 @@
+---
+key1: |
+  Line 1
+  Line 2
+  
+  Line 4
+  
+  
+key2: |-
+  Line 1
+  Line 2
+  
+  Line 4
+  
+  
+key3: |+
+  Line 1
+  Line 2
+  
+  Line 4
+  
+  
+key4: >
+  Line 1
+  Line 2
+  
+  Line 4
+  
+  
+key5: >-
+  Line 1
+  Line 2
+  
+  Line 4
+  
+  
+key6: >+
+  Line 1
+  Line 2
+  
+  Line 4
+  
+  
+---
