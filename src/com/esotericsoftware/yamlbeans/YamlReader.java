@@ -18,9 +18,11 @@ package com.esotericsoftware.yamlbeans;
 
 import static com.esotericsoftware.yamlbeans.parser.EventType.*;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -44,7 +46,7 @@ import com.esotericsoftware.yamlbeans.tokenizer.Tokenizer.TokenizerException;
 
 /** Deserializes Java objects from YAML.
  * @author <a href="mailto:misc@n4te.com">Nathan Sweet</a> */
-public class YamlReader {
+public class YamlReader implements AutoCloseable {
 	private final YamlConfig config;
 	Parser parser;
 	private final Map<String, Object> anchors = new HashMap();
@@ -106,7 +108,7 @@ public class YamlReader {
 			}
 			Object object = readValue(type, elementType, null);
 			parser.getNextEvent(); // consume it(DOCUMENT_END)
-			return (T) object;
+			return (T)object;
 		} catch (ParserException ex) {
 			throw new YamlException("Error parsing YAML.", ex);
 		} catch (TokenizerException ex) {
@@ -114,21 +116,19 @@ public class YamlReader {
 		}
 	}
 
-	/**
-	 * Reads all documents from YAML into Objects.
+	/** Reads all documents from YAML into Objects.
 	 * 
 	 * @param type specify Object type
-	 * @return an iterator reads documents in order
-	 */
-	public <T> Iterator<T> readAll(final Class<T> type) {
+	 * @return an iterator reads documents in order */
+	public <T> Iterator<T> readAll (final Class<T> type) {
 		Iterator<T> iterator = new Iterator<T>() {
 
-			public boolean hasNext() {
+			public boolean hasNext () {
 				Event event = parser.peekNextEvent();
 				return event != null && event.type != STREAM_END;
 			}
 
-			public T next() {
+			public T next () {
 				try {
 					return read(type);
 				} catch (YamlException e) {
@@ -136,7 +136,7 @@ public class YamlReader {
 				}
 			}
 
-			public void remove() {
+			public void remove () {
 				throw new UnsupportedOperationException();
 			}
 		};
@@ -307,15 +307,15 @@ public class YamlReader {
 		}
 
 		if (Enum.class.isAssignableFrom(type)) {
-		    Event event = parser.getNextEvent();
-		    if (event.type != SCALAR) throw new YamlReaderException("Expected scalar for enum type but found: " + event.type);
-		    String enumValueName = ((ScalarEvent)event).value;
-		    if (enumValueName == null) return null;
-		    try {
-		        return Enum.valueOf(type, enumValueName);
-		    } catch (Exception ex) {
-		        throw new YamlReaderException("Unable to find enum value '" + enumValueName + "' for enum class: " + type.getName());
-		    }
+			Event event = parser.getNextEvent();
+			if (event.type != SCALAR) throw new YamlReaderException("Expected scalar for enum type but found: " + event.type);
+			String enumValueName = ((ScalarEvent)event).value;
+			if (enumValueName == null) return null;
+			try {
+				return Enum.valueOf(type, enumValueName);
+			} catch (Exception ex) {
+				throw new YamlReaderException("Unable to find enum value '" + enumValueName + "' for enum class: " + type.getName());
+			}
 		}
 
 		Event event = parser.peekNextEvent();
@@ -487,23 +487,22 @@ public class YamlReader {
 		}
 	}
 
-    private Number valueConvertedNumber(String value) {
+	private Number valueConvertedNumber (String value) {
+		Number number = null;
+		try {
+			number = Long.decode(value);
+		} catch (NumberFormatException e) {
+		}
+		if (number == null) {
+			try {
+				number = Double.parseDouble(value);
+			} catch (NumberFormatException e) {
+			}
+		}
+		return number;
+	}
 
-        Number number = null;
-        try {
-            number = Long.decode(value);
-        } catch (NumberFormatException e) {
-        }
-        if (number == null) {
-            try {
-                number = Double.parseDouble(value);
-            } catch (NumberFormatException e) {
-            }
-        }
-        return number;
-    }
-
-	private void skipRange() {
+	private void skipRange () {
 		Event nextEvent;
 		int depth = 0;
 		do {
@@ -526,5 +525,16 @@ public class YamlReader {
 				break;
 			}
 		} while (depth > 0);
+	}
+
+	public static void main (String[] args) throws Exception {
+		YamlReader reader = new YamlReader(new FileReader("test/test.yml"));
+		Object object = reader.read();
+		System.out.println(object);
+		StringWriter string = new StringWriter();
+		YamlWriter writer = new YamlWriter(string);
+		writer.write(object);
+		writer.close();
+		System.out.println(string);
 	}
 }
